@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Kanban Board — Selectable Text + Copy + Drag Handle</title>
+<title>Kanban Board — Drag Handle Only</title>
 <style>
   :root{
     --bg:#1e1e1e; --col:#2e2e2e; --task:#444; --accent:#4cafef; --danger:#8b0000;
@@ -58,7 +58,7 @@
     display:flex;
     align-items:center;
     gap:8px;
-    user-select:text; /* allow selecting text */
+    user-select:text;
   }
 
   .drag-handle{
@@ -79,18 +79,12 @@
     padding-right:6px;
   }
 
-  .copy-btn{
-    background:transparent;border:0;color:inherit;font-size:16px;cursor:pointer;padding:6px;border-radius:6px;
-  }
-  .copy-btn:active{transform:translateY(1px)}
-
   #dustbin{background:var(--danger)}
 
   .footer{
     margin:20px;font-weight:bold;font-family:'Courier New',monospace;
   }
 
-  /* toast */
   .toast{
     position:fixed;
     left:50%;
@@ -125,6 +119,10 @@
     <h2>In Progress</h2>
   </div>
 
+  <div class="column" id="onhold" ondrop="drop(event)" ondragover="allowDrop(event)">
+    <h2>⏸️ On Hold</h2>
+  </div>
+
   <div class="column" id="completed" ondrop="drop(event)" ondragover="allowDrop(event)">
     <h2>✅ Completed</h2>
   </div>
@@ -142,7 +140,7 @@
   let taskId = 0;
 
   function saveBoard(){
-    const columns = ["todo","inprogress","completed"];
+    const columns = ["todo","inprogress","onhold","completed"];
     const boardData = {};
     columns.forEach(col => {
       const list = [];
@@ -170,18 +168,15 @@
     const task = document.createElement("div");
     task.className = "task";
     task.id = "task" + (taskId++);
-    // drag handle (only this is draggable)
+    
     const handle = document.createElement("span");
     handle.className = "drag-handle";
     handle.title = "Drag to move";
     handle.innerText = "☰";
     handle.draggable = true;
     handle.addEventListener("dragstart", function(ev){
-      // store parent task id to move on drop
       ev.dataTransfer.setData("text/plain", task.id);
-      // optional: make a nicer drag image
       if (ev.dataTransfer.setDragImage && handle) {
-        // create a small clone element for drag image
         const crt = handle.cloneNode(true);
         crt.style.position = "absolute";
         crt.style.top = "-9999px";
@@ -191,47 +186,12 @@
       }
     });
 
-    // text (selectable)
     const span = document.createElement("span");
     span.className = "task-text";
     span.innerText = text;
 
-    // copy button (click to copy)
-    const copyBtn = document.createElement("button");
-    copyBtn.className = "copy-btn";
-    copyBtn.type = "button";
-    copyBtn.title = "Copy task text";
-    copyBtn.innerText = "📋";
-    copyBtn.addEventListener("click", function(e){
-      e.stopPropagation();
-      e.preventDefault();
-      // copy only the visible text
-      const txt = span.innerText || "";
-      if(!txt) { showToast("Nothing to copy"); return; }
-      navigator.clipboard?.writeText(txt).then(() => {
-        showToast("Copied to clipboard");
-      }).catch(() => {
-        // fallback: create temp textarea
-        const ta = document.createElement("textarea");
-        ta.value = txt;
-        ta.style.position = "fixed";
-        ta.style.opacity = 0;
-        document.body.appendChild(ta);
-        ta.select();
-        try {
-          document.execCommand("copy");
-          showToast("Copied to clipboard");
-        } catch {
-          showToast("Copy failed");
-        }
-        document.body.removeChild(ta);
-      });
-    });
-
-    // assemble: handle | text | copy
     task.appendChild(handle);
     task.appendChild(span);
-    task.appendChild(copyBtn);
 
     return task;
   }
@@ -246,14 +206,9 @@
     saveBoard();
   }
 
-  function allowDrop(ev){
-    ev.preventDefault();
-  }
-
-  function drag(ev){
-    // not used — using handle's dragstart
-  }
-
+  function allowDrop(ev){ ev.preventDefault(); }
+  function drag(ev){}
+  
   function drop(ev){
     ev.preventDefault();
     const id = ev.dataTransfer.getData("text/plain");
@@ -275,7 +230,6 @@
     }
   }
 
-  // toast helper
   let toastTimer = null;
   function showToast(msg, timeout=1200){
     const t = document.getElementById("toast");
@@ -286,8 +240,6 @@
   }
 
   window.addEventListener("load", loadBoard);
-  // update save when user uses drag over columns (drop triggers save) and when adding tasks
-  // Also save when user manually edits selection (we don't allow editing here).
 </script>
 
 </body>
