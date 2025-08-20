@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Kanban + Notes App</title>
+<title>Kanban Board + Notes — Created by Sadik Pathan</title>
 <style>
   :root{
     --bg:#1e1e1e; --col:#2e2e2e; --task:#444; --accent:#4cafef; --danger:#8b0000;
@@ -45,7 +45,7 @@
     border-radius:10px;
     padding:10px;
     flex:1;
-    min-height:260px;
+    min-height:320px;
     display:flex;
     flex-direction:column;
   }
@@ -80,7 +80,7 @@
     padding-right:6px;
   }
 
-  #dustbin{background:var(--danger);flex:1;min-height:120px;}
+  #dustbin{background:var(--danger);flex-basis:100%}
 
   .footer{
     margin:20px;font-weight:bold;font-family:'Courier New',monospace;
@@ -98,58 +98,31 @@
   }
   .toast.show{opacity:1;pointer-events:auto}
 
-  /* Notes Section */
-  .notes{
+  /* Notes app */
+  .notes-section{
+    margin-top:40px;
     width:90%;
-    max-width:800px;
-    margin:30px auto;
-    background:#2e2e2e;
-    border-radius:10px;
-    padding:16px;
-    display:flex;
-    flex-direction:column;
-    gap:10px;
+    max-width:600px;
   }
-  .notes h2{text-align:center;margin:6px 0 14px}
   #noteInput{
-    width:95%;
-    height:120px;   /* Bigger height */
+    width:100%;
     padding:10px;
     border-radius:8px;
     border:0;
-    outline:none;
-    font-size:15px;
-    resize:vertical;
-    background:#333;
-    color:#fff;
     margin-bottom:10px;
   }
-  #saveNote{
-    padding:8px 12px;
-    border-radius:6px;
-    border:0;
-    background:var(--accent);
-    color:#fff;
-    cursor:pointer;
-    width:120px;
-  }
-  .note{
-    background:#444;
-    padding:10px;
+  #notesList div{
+    background:var(--task);
+    padding:8px;
     border-radius:6px;
     margin:6px 0;
     display:flex;
     justify-content:space-between;
     align-items:center;
   }
-  .note span{flex:1;word-break:break-word;}
-  .note button{
-    background:none;
-    border:none;
-    color:#ff5555;
-    cursor:pointer;
-    font-size:18px;
-    margin-left:8px;
+  #notesList span{flex:1;margin-right:8px}
+  .delete-note{
+    cursor:pointer;color:#ff4d4d;font-weight:bold;
   }
 </style>
 </head>
@@ -166,33 +139,25 @@
   <div class="column" id="todo" ondrop="drop(event)" ondragover="allowDrop(event)">
     <h2>To Do</h2>
   </div>
-
   <div class="column" id="inprogress" ondrop="drop(event)" ondragover="allowDrop(event)">
     <h2>In Progress</h2>
   </div>
-
   <div class="column" id="onhold" ondrop="drop(event)" ondragover="allowDrop(event)">
     <h2>⏸️ On Hold</h2>
   </div>
-
   <div class="column" id="completed" ondrop="drop(event)" ondragover="allowDrop(event)">
     <h2>✅ Completed</h2>
   </div>
-
   <div class="column" id="dustbin" ondrop="dropToDustbin(event)" ondragover="allowDrop(event)">
     <h2>🗑️ Dustbin</h2>
   </div>
-  
 </div>
 
-<!-- Dustbin column placed below -->
-
-
-<!-- Notes Section -->
-<div class="notes">
+<!-- Notes App -->
+<div class="notes-section">
   <h2>Notes</h2>
-  <textarea id="noteInput" placeholder="Write your note here..."></textarea>
-  <button id="saveNote" onclick="saveNote()">Save Note</button>
+  <textarea id="noteInput" rows="3" placeholder="Type your note here"></textarea>
+  <button onclick="addNote()">Save Note</button>
   <div id="notesList"></div>
 </div>
 
@@ -240,27 +205,30 @@
     handle.draggable = true;
     handle.addEventListener("dragstart", function(ev){
       ev.dataTransfer.setData("text/plain", task.id);
-      if (ev.dataTransfer.setDragImage && handle) {
-        const crt = handle.cloneNode(true);
-        crt.style.position = "absolute";
-        crt.style.top = "-9999px";
-        document.body.appendChild(crt);
-        ev.dataTransfer.setDragImage(crt, 8, 8);
-        setTimeout(()=> document.body.removeChild(crt), 0);
-      }
     });
 
     const span = document.createElement("span");
     span.className = "task-text";
     span.innerText = text;
 
-    // Make editable on double click
-    span.addEventListener("dblclick", function(){
-      const newText = prompt("Edit task:", span.innerText);
-      if(newText !== null && newText.trim() !== ""){
-        span.innerText = newText.trim();
+    // Editable on double click
+    span.addEventListener("dblclick", () => {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = span.innerText;
+      input.className = "edit-input";
+      task.replaceChild(input, span);
+      input.focus();
+
+      function saveEdit(){
+        span.innerText = input.value.trim() || "Untitled";
+        task.replaceChild(span, input);
         saveBoard();
       }
+      input.addEventListener("blur", saveEdit);
+      input.addEventListener("keydown", e=>{
+        if(e.key==="Enter") saveEdit();
+      });
     });
 
     task.appendChild(handle);
@@ -280,6 +248,7 @@
   }
 
   function allowDrop(ev){ ev.preventDefault(); }
+  
   function drop(ev){
     ev.preventDefault();
     const id = ev.dataTransfer.getData("text/plain");
@@ -289,6 +258,7 @@
     col.appendChild(task);
     saveBoard();
   }
+
   function dropToDustbin(ev){
     ev.preventDefault();
     const id = ev.dataTransfer.getData("text/plain");
@@ -309,44 +279,40 @@
     toastTimer = setTimeout(()=> t.classList.remove("show"), timeout);
   }
 
-  // Notes app
-  function saveNote(){
-    const input = document.getElementById("noteInput");
-    const text = input.value.trim();
-    if(!text) return;
-    const note = createNote(text);
-    document.getElementById("notesList").appendChild(note);
-    input.value = "";
-    saveNotes();
-  }
-  function createNote(text){
-    const note = document.createElement("div");
-    note.className = "note";
-    const span = document.createElement("span");
-    span.innerText = text;
-    const delBtn = document.createElement("button");
-    delBtn.innerText = "❌";
-    delBtn.onclick = function(){
-      note.remove();
-      saveNotes();
-    };
-    note.appendChild(span);
-    note.appendChild(delBtn);
-    return note;
-  }
+  // Notes app logic
   function saveNotes(){
     const notes = [];
-    document.querySelectorAll("#notesList .note span").forEach(s=>{
-      notes.push(s.innerText);
+    document.querySelectorAll("#notesList span").forEach(n=>{
+      notes.push(n.innerText);
     });
     localStorage.setItem("notesApp", JSON.stringify(notes));
   }
+
   function loadNotes(){
     const notes = JSON.parse(localStorage.getItem("notesApp")||"[]");
-    notes.forEach(text=>{
-      const note = createNote(text);
-      document.getElementById("notesList").appendChild(note);
-    });
+    notes.forEach(text=> addNoteToList(text));
+  }
+
+  function addNote(){
+    const input = document.getElementById("noteInput");
+    const text = input.value.trim();
+    if(!text) return;
+    addNoteToList(text);
+    input.value = "";
+    saveNotes();
+  }
+
+  function addNoteToList(text){
+    const div = document.createElement("div");
+    const span = document.createElement("span");
+    span.innerText = text;
+    const del = document.createElement("span");
+    del.className="delete-note";
+    del.innerText="❌";
+    del.onclick=()=>{div.remove();saveNotes();}
+    div.appendChild(span);
+    div.appendChild(del);
+    document.getElementById("notesList").appendChild(div);
   }
 
   window.addEventListener("load", ()=>{
