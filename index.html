@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Kanban Board — Drag Handle Only</title>
+<title>Kanban + Notes App</title>
 <style>
   :root{
     --bg:#1e1e1e; --col:#2e2e2e; --task:#444; --accent:#4cafef; --danger:#8b0000;
@@ -17,39 +17,34 @@
     flex-direction:column;
     align-items:center;
     min-height:100vh;
+    padding:20px;
   }
-  h1{margin:18px 0 6px;text-align:center}
-  .add-task{
-    width:90%;
-    display:flex;
-    gap:8px;
-    margin-bottom:14px;
-  }
-  .add-task input{
-    flex:1;padding:8px;border-radius:6px;border:0;outline:none;
-  }
-  .add-task button{
-    padding:8px 12px;border-radius:6px;border:0;background:var(--accent);color:#fff;cursor:pointer;
-  }
-
+  h1,h2{text-align:center;margin:16px 0 10px}
+  
   .board{
     width:95%;
     display:flex;
     gap:18px;
     justify-content:center;
     align-items:flex-start;
+    margin-bottom:10px;
+  }
+  .board-bottom{
+    width:50%;
+    display:flex;
+    justify-content:center;
+    margin-bottom:30px;
   }
   .column{
     background:var(--col);
     border-radius:10px;
     padding:10px;
     flex:1;
-    min-height:420px;
+    min-height:300px;
     display:flex;
     flex-direction:column;
   }
-  .column h2{text-align:center;margin:6px 0 10px}
-
+  .column h2{margin:6px 0 10px}
   .task{
     background:var(--task);
     padding:8px;
@@ -60,31 +55,16 @@
     gap:8px;
     user-select:text;
   }
-
   .drag-handle{
     cursor:grab;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
     padding:6px;
     border-radius:6px;
     font-size:16px;
     user-select:none;
   }
   .drag-handle:active{cursor:grabbing}
-
-  .task-text{
-    flex:1;
-    word-break:break-word;
-    padding-right:6px;
-  }
-
+  .task-text{flex:1;word-break:break-word;padding-right:6px;}
   #dustbin{background:var(--danger)}
-
-  .footer{
-    margin:20px;font-weight:bold;font-family:'Courier New',monospace;
-  }
-
   .toast{
     position:fixed;
     left:50%;
@@ -96,49 +76,116 @@
     opacity:0;pointer-events:none;transition:opacity .18s ease;
   }
   .toast.show{opacity:1;pointer-events:auto}
+
+  /* Notes App Styling */
+  textarea {
+    width: 100%;
+    max-width: 700px;
+    height: 120px;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    margin-bottom: 10px;
+    font-size: 16px;
+  }
+  button {
+    margin: 5px;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 6px;
+    background: #4CAF50;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  button:hover { background:#45a049; }
+  ul {
+    list-style: none;
+    padding: 0;
+    max-width: 700px;
+    width: 100%;
+  }
+  li {
+    background: #333;
+    margin: 5px 0;
+    padding: 10px;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  li span {white-space: pre-wrap;flex-grow: 1;margin-right: 10px;}
+  .delete-btn, .edit-btn {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    margin-left: 5px;
+  }
+  .delete-btn { color: #ff4c4c; }
+  .delete-btn:hover { color: #ff0000; }
+  .edit-btn { color: #4CAF50; }
+  .edit-btn:hover { color: #00ff00; }
+  .footer{
+    margin:30px 0 10px;
+    font-size:14px;
+    color:#aaa;
+    text-align:center;
+  }
   @media (max-width:600px){
     .board{flex-direction:column}
+    .board-bottom{width:95%}
   }
 </style>
 </head>
 <body>
 
+<!-- Kanban Section -->
 <h1>Kanban Board</h1>
-
 <div class="add-task">
   <input id="taskInput" placeholder="Enter new task" />
   <button onclick="addTask()">Add</button>
 </div>
 
+<!-- Top row with 4 columns -->
 <div class="board">
   <div class="column" id="todo" ondrop="drop(event)" ondragover="allowDrop(event)">
     <h2>To Do</h2>
   </div>
-
   <div class="column" id="inprogress" ondrop="drop(event)" ondragover="allowDrop(event)">
     <h2>In Progress</h2>
   </div>
-
   <div class="column" id="onhold" ondrop="drop(event)" ondragover="allowDrop(event)">
     <h2>⏸️ On Hold</h2>
   </div>
-
   <div class="column" id="completed" ondrop="drop(event)" ondragover="allowDrop(event)">
     <h2>✅ Completed</h2>
   </div>
+</div>
 
+<!-- Bottom row with Dustbin -->
+<div class="board-bottom">
   <div class="column" id="dustbin" ondrop="dropToDustbin(event)" ondragover="allowDrop(event)">
     <h2>🗑️ Dustbin</h2>
   </div>
 </div>
 
-<div class="footer">Created by <b>Sadik Pathan</b></div>
-
 <div id="toast" class="toast" aria-live="polite"></div>
 
-<script>
-  let taskId = 0;
+<!-- Notes Section -->
+<h1>📝 My Notes</h1>
+<textarea id="noteInput" placeholder="Type your note here..."></textarea><br>
+<button onclick="saveNote()">Save Note</button>
+<button onclick="exportNotes()">Export Notes</button>
 
+<h2>Saved Notes</h2>
+<ul id="notesList"></ul>
+
+<div class="footer">Created by Sadik Pathan</div>
+
+<script>
+  /* ------------------ Kanban JS ------------------ */
+  let taskId = 0;
   function saveBoard(){
     const columns = ["todo","inprogress","onhold","completed"];
     const boardData = {};
@@ -152,7 +199,6 @@
     });
     localStorage.setItem("kanbanBoard", JSON.stringify(boardData));
   }
-
   function loadBoard(){
     const boardData = JSON.parse(localStorage.getItem("kanbanBoard") || "null");
     if(!boardData) return;
@@ -163,12 +209,10 @@
       });
     });
   }
-
   function createTask(text){
     const task = document.createElement("div");
     task.className = "task";
     task.id = "task" + (taskId++);
-    
     const handle = document.createElement("span");
     handle.className = "drag-handle";
     handle.title = "Drag to move";
@@ -185,17 +229,13 @@
         setTimeout(()=> document.body.removeChild(crt), 0);
       }
     });
-
     const span = document.createElement("span");
     span.className = "task-text";
     span.innerText = text;
-
     task.appendChild(handle);
     task.appendChild(span);
-
     return task;
   }
-
   function addTask(){
     const input = document.getElementById("taskInput");
     const text = input.value.trim();
@@ -205,10 +245,7 @@
     input.value = "";
     saveBoard();
   }
-
   function allowDrop(ev){ ev.preventDefault(); }
-  function drag(ev){}
-  
   function drop(ev){
     ev.preventDefault();
     const id = ev.dataTransfer.getData("text/plain");
@@ -218,7 +255,6 @@
     col.appendChild(task);
     saveBoard();
   }
-
   function dropToDustbin(ev){
     ev.preventDefault();
     const id = ev.dataTransfer.getData("text/plain");
@@ -229,7 +265,6 @@
       showToast("Task deleted");
     }
   }
-
   let toastTimer = null;
   function showToast(msg, timeout=1200){
     const t = document.getElementById("toast");
@@ -238,8 +273,57 @@
     if(toastTimer) clearTimeout(toastTimer);
     toastTimer = setTimeout(()=> t.classList.remove("show"), timeout);
   }
-
   window.addEventListener("load", loadBoard);
+
+  /* ------------------ Notes JS ------------------ */
+  let notes = JSON.parse(localStorage.getItem("notes")) || [];
+  let editIndex = -1;
+  renderNotes();
+  function saveNote() {
+    const noteInput = document.getElementById("noteInput");
+    const text = noteInput.value;
+    if (text === "") return;
+    if (editIndex === -1) { notes.push(text); } 
+    else { notes[editIndex] = text; editIndex = -1; }
+    localStorage.setItem("notes", JSON.stringify(notes));
+    noteInput.value = "";
+    renderNotes();
+  }
+  function renderNotes() {
+    const list = document.getElementById("notesList");
+    list.innerHTML = "";
+    notes.forEach((note, index) => {
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <span>${note}</span>
+        <div>
+          <button class="edit-btn" onclick="editNote(${index})">✏️</button>
+          <button class="delete-btn" onclick="deleteNote(${index})">❌</button>
+        </div>`;
+      list.appendChild(li);
+    });
+  }
+  function deleteNote(index) {
+    notes.splice(index, 1);
+    localStorage.setItem("notes", JSON.stringify(notes));
+    renderNotes();
+  }
+  function editNote(index) {
+    const noteInput = document.getElementById("noteInput");
+    noteInput.value = notes[index];
+    editIndex = index;
+  }
+  function exportNotes() {
+    const content = notes.join("\n\n************************\n\n"); 
+    const blob = new Blob([content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "my_notes.txt";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
 </script>
 
 </body>
