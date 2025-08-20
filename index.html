@@ -20,26 +20,21 @@
     padding:20px;
   }
   h1,h2{text-align:center;margin:16px 0 10px}
-  
   .board{
     width:95%;
     display:flex;
     gap:18px;
     justify-content:center;
     align-items:flex-start;
-    margin-bottom:10px;
-  }
-  .board-bottom{
-    width:50%;
-    display:flex;
-    justify-content:center;
     margin-bottom:30px;
+    flex-wrap:wrap;
   }
   .column{
     background:var(--col);
     border-radius:10px;
     padding:10px;
     flex:1;
+    min-width:200px;
     min-height:300px;
     display:flex;
     flex-direction:column;
@@ -132,10 +127,7 @@
     color:#aaa;
     text-align:center;
   }
-  @media (max-width:600px){
-    .board{flex-direction:column}
-    .board-bottom{width:95%}
-  }
+  @media (max-width:600px){.board{flex-direction:column}}
 </style>
 </head>
 <body>
@@ -145,9 +137,8 @@
 <div class="add-task">
   <input id="taskInput" placeholder="Enter new task" />
   <button onclick="addTask()">Add</button>
+  <button onclick="exportTasks()">Export Tasks</button>
 </div>
-
-<!-- Top row with 4 columns -->
 <div class="board">
   <div class="column" id="todo" ondrop="drop(event)" ondragover="allowDrop(event)">
     <h2>To Do</h2>
@@ -161,10 +152,6 @@
   <div class="column" id="completed" ondrop="drop(event)" ondragover="allowDrop(event)">
     <h2>✅ Completed</h2>
   </div>
-</div>
-
-<!-- Bottom row with Dustbin -->
-<div class="board-bottom">
   <div class="column" id="dustbin" ondrop="dropToDustbin(event)" ondragover="allowDrop(event)">
     <h2>🗑️ Dustbin</h2>
   </div>
@@ -274,6 +261,28 @@
     toastTimer = setTimeout(()=> t.classList.remove("show"), timeout);
   }
   window.addEventListener("load", loadBoard);
+
+  /* Export Kanban Tasks */
+  function exportTasks() {
+    const columns = ["todo","inprogress","onhold","completed"];
+    let content = "";
+    columns.forEach(col => {
+      const colName = document.querySelector(`#${col} h2`).innerText;
+      content += "=== " + colName + " ===\n";
+      document.querySelectorAll(`#${col} .task-text`).forEach((t, i) => {
+        content += (i+1) + ". " + t.innerText + "\n";
+      });
+      content += "\n";
+    });
+    const blob = new Blob([content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "kanban_tasks.txt";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
 
   /* ------------------ Notes JS ------------------ */
   let notes = JSON.parse(localStorage.getItem("notes")) || [];
