@@ -71,14 +71,7 @@
     user-select:none;
   }
   .drag-handle:active{cursor:grabbing}
-  .task-text{flex:1;word-break:break-word;padding-right:6px;}
-  .task-edit-input{
-    flex:1;
-    padding:6px;
-    border-radius:6px;
-    border:0;
-    background:#333;color:#fff;font-size:14px;
-  }
+  .task-text{flex:1;word-break:break-word;padding-right:6px;outline:none;}
   #dustbin{background:var(--danger)}
   .toast{
     position:fixed;
@@ -96,7 +89,7 @@
   textarea {
     width: 100%;
     max-width: 900px;
-    height: 400px; /* bigger */
+    height: 400px;
     padding: 12px;
     border-radius: 8px;
     border: none;
@@ -194,8 +187,8 @@
 <div class="footer">Created by Sadik Pathan</div>
 
 <script>
-  /* ------------------ Kanban JS (fixed) ------------------ */
-  let taskId = Date.now(); // simple unique seed
+  /* ------------------ Kanban JS ------------------ */
+  let taskId = Date.now();
 
   function saveBoard(){
     const columns = ["todo","inprogress","onhold","completed"];
@@ -212,13 +205,10 @@
   }
 
   function loadBoard(){
-    // support older key names by migrating if necessary
     let raw = localStorage.getItem("kanbanBoard");
     if(!raw){
-      // fallback to older key 'kanban' if present
       raw = localStorage.getItem("kanban");
       if(raw){
-        // migrate to new key
         localStorage.setItem("kanbanBoard", raw);
         localStorage.removeItem("kanban");
       }
@@ -232,7 +222,6 @@
       return;
     }
 
-    // clear existing tasks in target columns (avoid duplicates)
     ["todo","inprogress","onhold","completed"].forEach(col => {
       document.querySelectorAll(`#${col} .task`).forEach(el => el.remove());
     });
@@ -241,7 +230,7 @@
       const columnEl = document.getElementById(col);
       if(!columnEl) return;
       boardData[col].forEach(taskText => {
-        const task = createTask(taskText, false); // don't auto-save during load
+        const task = createTask(taskText, false);
         columnEl.appendChild(task);
       });
     });
@@ -264,25 +253,17 @@
     const span = document.createElement("span");
     span.className = "task-text";
     span.innerText = text;
+    span.contentEditable = true;
 
-    // inline-edit on click (instant)
-    span.addEventListener("click", function(){
-      const current = span.innerText;
-      const input = document.createElement("input");
-      input.type = "text";
-      input.value = current;
-      input.className = "task-edit-input";
-      span.replaceWith(input);
-      input.focus();
+    // Save when leaving edit
+    span.addEventListener("blur", saveBoard);
 
-      function finish(){
-        const newVal = input.value.trim();
-        span.innerText = newVal === "" ? current : newVal;
-        input.replaceWith(span);
-        saveBoard();
+    // Save when pressing Enter
+    span.addEventListener("keydown", (e)=>{
+      if(e.key === "Enter"){
+        e.preventDefault();
+        span.blur(); // triggers saveBoard
       }
-      input.addEventListener("blur", finish);
-      input.addEventListener("keydown", e => { if(e.key === "Enter") finish(); });
     });
 
     task.appendChild(handle);
@@ -333,7 +314,6 @@
     toastTimer = setTimeout(()=> t.classList.remove("show"), timeout);
   }
 
-  /* Export Kanban Tasks */
   function exportTasks() {
     const columns = ["todo","inprogress","onhold","completed"];
     let content = "";
