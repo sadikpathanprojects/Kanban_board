@@ -320,7 +320,7 @@
     columns.forEach(col => {
       const headerEl = document.querySelector(`#${col} h2`);
       const colName = headerEl ? headerEl.innerText : col;
-      content += "=== " + colName + " ===\n";
+      content += "====================== " + colName + " ========================\n";
       document.querySelectorAll(`#${col} .task-text`).forEach((t, i) => {
         content += (i+1) + ". " + t.innerText + "\n";
       });
@@ -377,7 +377,7 @@
     editIndex = index;
   }
   function exportNotes() {
-    const content = notes.join("\n\n************************\n\n"); 
+    const content = notes.join("\n\n******************************************\n\n"); 
     const blob = new Blob([content], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
