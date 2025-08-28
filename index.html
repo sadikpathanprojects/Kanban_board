@@ -59,9 +59,13 @@
     margin:6px 0;
     border-radius:6px;
     display:flex;
+    flex-direction:column;
+    user-select:text;
+  }
+  .task-header{
+    display:flex;
     align-items:center;
     gap:8px;
-    user-select:text;
   }
   .drag-handle{
     cursor:grab;
@@ -72,6 +76,12 @@
   }
   .drag-handle:active{cursor:grabbing}
   .task-text{flex:1;word-break:break-word;padding-right:6px;outline:none;}
+  .timestamp{
+    font-size:11px;
+    color:#aaa;
+    margin-left:24px;
+    margin-top:2px;
+  }
   #dustbin{background:var(--danger)}
   .toast{
     position:fixed;
@@ -123,9 +133,11 @@
     border-radius: 6px;
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
+    flex-direction: column;
   }
   li span {white-space: pre-wrap;flex-grow: 1;margin-right: 10px;}
+  .note-actions {align-self:flex-end;margin-top:5px;}
   .delete-btn, .edit-btn {
     background: none;
     border: none;
@@ -197,7 +209,8 @@
       const list = [];
       document.querySelectorAll(`#${col} .task`).forEach(t => {
         const txt = t.querySelector(".task-text")?.innerText ?? "";
-        list.push(txt);
+        const ts = t.getAttribute("data-timestamp") || "";
+        list.push({ text: txt, timestamp: ts });
       });
       boardData[col] = list;
     });
@@ -206,21 +219,11 @@
 
   function loadBoard(){
     let raw = localStorage.getItem("kanbanBoard");
-    if(!raw){
-      raw = localStorage.getItem("kanban");
-      if(raw){
-        localStorage.setItem("kanbanBoard", raw);
-        localStorage.removeItem("kanban");
-      }
-    }
     if(!raw) return;
     let boardData;
     try {
       boardData = JSON.parse(raw);
-    } catch(e){
-      console.error("Failed to parse kanban data:", e);
-      return;
-    }
+    } catch(e){ return; }
 
     ["todo","inprogress","onhold","completed"].forEach(col => {
       document.querySelectorAll(`#${col} .task`).forEach(el => el.remove());
@@ -229,18 +232,25 @@
     Object.keys(boardData).forEach(col => {
       const columnEl = document.getElementById(col);
       if(!columnEl) return;
-      boardData[col].forEach(taskText => {
-        const task = createTask(taskText, false);
+      boardData[col].forEach(taskObj => {
+        // support old string-only tasks
+        const txt = typeof taskObj === "string" ? taskObj : taskObj.text;
+        const ts = typeof taskObj === "string" ? new Date().toLocaleString() : taskObj.timestamp;
+        const task = createTask(txt, ts, false);
         columnEl.appendChild(task);
       });
     });
   }
 
-  function createTask(text, doSave = true){
+  function createTask(text, timestamp = new Date().toLocaleString(), doSave = true){
     const task = document.createElement("div");
     task.className = "task";
     task.id = "task-" + (taskId++);
+    task.setAttribute("data-timestamp", timestamp);
     
+    const header = document.createElement("div");
+    header.className = "task-header";
+
     const handle = document.createElement("span");
     handle.className = "drag-handle";
     handle.title = "Drag to move";
@@ -255,19 +265,23 @@
     span.innerText = text;
     span.contentEditable = true;
 
-    // Save when leaving edit
     span.addEventListener("blur", saveBoard);
-
-    // Save when pressing Enter
     span.addEventListener("keydown", (e)=>{
       if(e.key === "Enter"){
         e.preventDefault();
-        span.blur(); // triggers saveBoard
+        span.blur();
       }
     });
 
-    task.appendChild(handle);
-    task.appendChild(span);
+    header.appendChild(handle);
+    header.appendChild(span);
+
+    const tsEl = document.createElement("div");
+    tsEl.className = "timestamp";
+    tsEl.textContent = "Added: " + timestamp;
+
+    task.appendChild(header);
+    task.appendChild(tsEl);
 
     if(doSave) saveBoard();
     return task;
@@ -321,8 +335,10 @@
       const headerEl = document.querySelector(`#${col} h2`);
       const colName = headerEl ? headerEl.innerText : col;
       content += "=== " + colName + " ===\n";
-      document.querySelectorAll(`#${col} .task-text`).forEach((t, i) => {
-        content += (i+1) + ". " + t.innerText + "\n";
+      document.querySelectorAll(`#${col} .task`).forEach((t, i) => {
+        const txt = t.querySelector(".task-text")?.innerText ?? "";
+        const ts = t.getAttribute("data-timestamp") || "";
+        content += (i+1) + ". " + txt + " (" + ts + ")\n";
       });
       content += "\n";
     });
@@ -344,10 +360,14 @@
   renderNotes();
   function saveNote() {
     const noteInput = document.getElementById("noteInput");
-    const text = noteInput.value;
+    const text = noteInput.value.trim();
     if (text === "") return;
-    if (editIndex === -1) { notes.push(text); } 
-    else { notes[editIndex] = text; editIndex = -1; }
+    if (editIndex === -1) { 
+      notes.push({ text, timestamp: new Date().toLocaleString() }); 
+    } else { 
+      notes[editIndex].text = text; 
+      editIndex = -1; 
+    }
     localStorage.setItem("notes", JSON.stringify(notes));
     noteInput.value = "";
     renderNotes();
@@ -356,10 +376,13 @@
     const list = document.getElementById("notesList");
     list.innerHTML = "";
     notes.forEach((note, index) => {
+      const text = typeof note === "string" ? note : note.text;
+      const ts = typeof note === "string" ? "" : note.timestamp;
       const li = document.createElement("li");
       li.innerHTML = `
-        <span>${note}</span>
-        <div>
+        <span>${text}</span>
+        <div class="timestamp">${ts ? "Added: " + ts : ""}</div>
+        <div class="note-actions">
           <button class="edit-btn" onclick="editNote(${index})">✏️</button>
           <button class="delete-btn" onclick="deleteNote(${index})">❌</button>
         </div>`;
@@ -373,11 +396,15 @@
   }
   function editNote(index) {
     const noteInput = document.getElementById("noteInput");
-    noteInput.value = notes[index];
+    noteInput.value = typeof notes[index] === "string" ? notes[index] : notes[index].text;
     editIndex = index;
   }
   function exportNotes() {
-    const content = notes.join("\n\n************************\n\n"); 
+    let content = notes.map(n => {
+      const txt = typeof n === "string" ? n : n.text;
+      const ts = typeof n === "string" ? "" : n.timestamp;
+      return txt + (ts ? " (" + ts + ")" : "");
+    }).join("\n\n************************\n\n");
     const blob = new Blob([content], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
