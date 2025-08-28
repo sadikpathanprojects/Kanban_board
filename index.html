@@ -20,40 +20,122 @@
     padding:20px;
   }
   h1,h2{text-align:center;margin:16px 0 10px}
-  .add-task{
-    width:90%;
+  
+  .board{
+    width:95%;
     display:flex;
-    gap:8px;
-    margin-bottom:14px;
-    flex-wrap: wrap;
+    gap:18px;
+    justify-content:center;
+    align-items:flex-start;
+    margin-bottom:10px;
   }
-  .add-task input{flex:1;padding:8px;border-radius:6px;border:0;outline:none;background:#333;color:#fff;}
-  .add-task button{padding:8px 12px;border-radius:6px;border:0;background:var(--accent);color:#fff;cursor:pointer;}
-  .board{width:95%;display:flex;gap:18px;justify-content:center;align-items:flex-start;margin-bottom:30px;flex-wrap:wrap;}
-  .column{background:var(--col);border-radius:10px;padding:10px;flex:1;min-width:200px;min-height:300px;display:flex;flex-direction:column;}
+  .board-bottom{
+    width:50%;
+    display:flex;
+    justify-content:center;
+    margin-bottom:30px;
+  }
+  .column{
+    background:var(--col);
+    border-radius:10px;
+    padding:10px;
+    flex:1;
+    min-height:300px;
+    display:flex;
+    flex-direction:column;
+  }
   .column h2{margin:6px 0 10px}
-  .task{background:var(--task);padding:8px;margin:6px 0;border-radius:6px;display:flex;flex-direction:column;user-select:text;}
-  .task-header{display:flex;align-items:center;gap:8px;}
-  .drag-handle{cursor:grab;padding:6px;border-radius:6px;font-size:16px;user-select:none;}
+  .task{
+    background:var(--task);
+    padding:8px;
+    margin:6px 0;
+    border-radius:6px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    user-select:text;
+  }
+  .drag-handle{
+    cursor:grab;
+    padding:6px;
+    border-radius:6px;
+    font-size:16px;
+    user-select:none;
+  }
   .drag-handle:active{cursor:grabbing}
-  .task-text{flex:1;word-break:break-word;padding-right:6px;outline:none;}
-  .task-time{font-size:11px;color:#bbb;margin-left:24px;margin-top:2px;}
+  .task-text{flex:1;word-break:break-word;padding-right:6px;}
   #dustbin{background:var(--danger)}
-  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:28px;background:#222;color:#fff;padding:8px 14px;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .18s ease;}
+  .toast{
+    position:fixed;
+    left:50%;
+    transform:translateX(-50%);
+    bottom:28px;
+    background:#222;
+    color:#fff;
+    padding:8px 14px;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.5);
+    opacity:0;pointer-events:none;transition:opacity .18s ease;
+  }
   .toast.show{opacity:1;pointer-events:auto}
-  textarea{width:100%;max-width:900px;height:400px;padding:12px;border-radius:8px;border:none;margin-bottom:10px;font-size:16px;background:#333;color:#fff;resize:vertical;}
-  button{margin:5px;padding:10px 15px;border:none;border-radius:6px;background:#4CAF50;color:white;font-size:14px;cursor:pointer;}
-  button:hover{background:#45a049;}
-  ul{list-style:none;padding:0;max-width:800px;width:100%;}
-  li{background:#333;margin:5px 0;padding:10px;border-radius:6px;display:flex;justify-content:space-between;align-items:center;}
-  li span{white-space:pre-wrap;flex-grow:1;margin-right:10px;}
-  .delete-btn,.edit-btn{background:none;border:none;font-size:18px;cursor:pointer;margin-left:5px;}
-  .delete-btn{color:#ff4c4c;}
-  .delete-btn:hover{color:#ff0000;}
-  .edit-btn{color:#4CAF50;}
-  .edit-btn:hover{color:#00ff00;}
-  .footer{margin:30px 0 10px;font-size:14px;color:#aaa;text-align:center;}
-  @media (max-width:600px){.board{flex-direction:column}}
+
+  /* Notes App Styling */
+  textarea {
+    width: 100%;
+    max-width: 700px;
+    height: 120px;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    margin-bottom: 10px;
+    font-size: 16px;
+  }
+  button {
+    margin: 5px;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 6px;
+    background: #4CAF50;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  button:hover { background:#45a049; }
+  ul {
+    list-style: none;
+    padding: 0;
+    max-width: 700px;
+    width: 100%;
+  }
+  li {
+    background: #333;
+    margin: 5px 0;
+    padding: 10px;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  li span {white-space: pre-wrap;flex-grow: 1;margin-right: 10px;}
+  .delete-btn, .edit-btn {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    margin-left: 5px;
+  }
+  .delete-btn { color: #ff4c4c; }
+  .delete-btn:hover { color: #ff0000; }
+  .edit-btn { color: #4CAF50; }
+  .edit-btn:hover { color: #00ff00; }
+  .footer{
+    margin:30px 0 10px;
+    font-size:14px;
+    color:#aaa;
+    text-align:center;
+  }
+  @media (max-width:600px){
+    .board{flex-direction:column}
+    .board-bottom{width:95%}
+  }
 </style>
 </head>
 <body>
@@ -63,27 +145,38 @@
 <div class="add-task">
   <input id="taskInput" placeholder="Enter new task" />
   <button onclick="addTask()">Add</button>
-  <button onclick="exportTasksJSON()">Export Tasks JSON</button>
-  <input type="file" id="importTasksFile" accept="application/json" onchange="importTasksJSON(event)" style="display:none;">
-  <button onclick="document.getElementById('importTasksFile').click()">Import Tasks JSON</button>
 </div>
+
+<!-- Top row with 4 columns -->
 <div class="board">
-  <div class="column" id="todo" ondrop="drop(event)" ondragover="allowDrop(event)"><h2>To Do</h2></div>
-  <div class="column" id="inprogress" ondrop="drop(event)" ondragover="allowDrop(event)"><h2>In Progress</h2></div>
-  <div class="column" id="onhold" ondrop="drop(event)" ondragover="allowDrop(event)"><h2>⏸️ On Hold</h2></div>
-  <div class="column" id="completed" ondrop="drop(event)" ondragover="allowDrop(event)"><h2>✅ Completed</h2></div>
-  <div class="column" id="dustbin" ondrop="dropToDustbin(event)" ondragover="allowDrop(event)"><h2>🗑️ Dustbin</h2></div>
+  <div class="column" id="todo" ondrop="drop(event)" ondragover="allowDrop(event)">
+    <h2>To Do</h2>
+  </div>
+  <div class="column" id="inprogress" ondrop="drop(event)" ondragover="allowDrop(event)">
+    <h2>In Progress</h2>
+  </div>
+  <div class="column" id="onhold" ondrop="drop(event)" ondragover="allowDrop(event)">
+    <h2>⏸️ On Hold</h2>
+  </div>
+  <div class="column" id="completed" ondrop="drop(event)" ondragover="allowDrop(event)">
+    <h2>✅ Completed</h2>
+  </div>
 </div>
+
+<!-- Bottom row with Dustbin -->
+<div class="board-bottom">
+  <div class="column" id="dustbin" ondrop="dropToDustbin(event)" ondragover="allowDrop(event)">
+    <h2>🗑️ Dustbin</h2>
+  </div>
+</div>
+
 <div id="toast" class="toast" aria-live="polite"></div>
 
 <!-- Notes Section -->
 <h1>📝 My Notes</h1>
 <textarea id="noteInput" placeholder="Type your note here..."></textarea><br>
 <button onclick="saveNote()">Save Note</button>
-<button onclick="exportNotesJSON()">Export Notes JSON</button>
-<button onclick="exportNotesTXT()">Export Notes TXT</button> <!-- ✅ NEW BUTTON -->
-<input type="file" id="importNotesFile" accept="application/json" onchange="importNotesJSON(event)" style="display:none;">
-<button onclick="document.getElementById('importNotesFile').click()">Import Notes JSON</button>
+<button onclick="exportNotes()">Export Notes</button>
 
 <h2>Saved Notes</h2>
 <ul id="notesList"></ul>
@@ -91,8 +184,8 @@
 <div class="footer">Created by Sadik Pathan</div>
 
 <script>
-  let taskId = Date.now();
-
+  /* ------------------ Kanban JS ------------------ */
+  let taskId = 0;
   function saveBoard(){
     const columns = ["todo","inprogress","onhold","completed"];
     const boardData = {};
@@ -100,73 +193,49 @@
       const list = [];
       document.querySelectorAll(`#${col} .task`).forEach(t => {
         const txt = t.querySelector(".task-text")?.innerText ?? "";
-        const time = t.dataset.time || "";
-        list.push({ text: txt, time: time });
+        list.push(txt);
       });
       boardData[col] = list;
     });
     localStorage.setItem("kanbanBoard", JSON.stringify(boardData));
   }
-
   function loadBoard(){
-    let raw = localStorage.getItem("kanbanBoard");
-    if(!raw) return;
-    let boardData;
-    try { boardData = JSON.parse(raw); } catch(e){ return; }
-    ["todo","inprogress","onhold","completed"].forEach(col => {
-      document.querySelectorAll(`#${col} .task`).forEach(el => el.remove());
-    });
+    const boardData = JSON.parse(localStorage.getItem("kanbanBoard") || "null");
+    if(!boardData) return;
     Object.keys(boardData).forEach(col => {
-      const columnEl = document.getElementById(col);
-      if(!columnEl) return;
-      boardData[col].forEach(taskObj => {
-        const task = createTask(taskObj.text, taskObj.time, false);
-        columnEl.appendChild(task);
+      boardData[col].forEach(taskText => {
+        const task = createTask(taskText);
+        document.getElementById(col).appendChild(task);
       });
     });
   }
-
-  function createTask(text, time=null, doSave = true){
+  function createTask(text){
     const task = document.createElement("div");
     task.className = "task";
-    task.id = "task-" + (taskId++);
-    const createdTime = time || new Date().toLocaleString();
-    task.dataset.time = createdTime;
-
-    const header = document.createElement("div");
-    header.className = "task-header";
-
+    task.id = "task" + (taskId++);
     const handle = document.createElement("span");
     handle.className = "drag-handle";
+    handle.title = "Drag to move";
     handle.innerText = "☰";
     handle.draggable = true;
-    handle.addEventListener("dragstart", ev => {
+    handle.addEventListener("dragstart", function(ev){
       ev.dataTransfer.setData("text/plain", task.id);
+      if (ev.dataTransfer.setDragImage && handle) {
+        const crt = handle.cloneNode(true);
+        crt.style.position = "absolute";
+        crt.style.top = "-9999px";
+        document.body.appendChild(crt);
+        ev.dataTransfer.setDragImage(crt, 8, 8);
+        setTimeout(()=> document.body.removeChild(crt), 0);
+      }
     });
-
     const span = document.createElement("span");
     span.className = "task-text";
     span.innerText = text;
-    span.contentEditable = true;
-    span.addEventListener("blur", saveBoard);
-    span.addEventListener("keydown", (e)=>{
-      if(e.key === "Enter"){ e.preventDefault(); span.blur(); }
-    });
-
-    header.appendChild(handle);
-    header.appendChild(span);
-
-    const timeEl = document.createElement("div");
-    timeEl.className = "task-time";
-    timeEl.innerText = "Added: " + createdTime;
-
-    task.appendChild(header);
-    task.appendChild(timeEl);
-
-    if(doSave) saveBoard();
+    task.appendChild(handle);
+    task.appendChild(span);
     return task;
   }
-
   function addTask(){
     const input = document.getElementById("taskInput");
     const text = input.value.trim();
@@ -176,7 +245,6 @@
     input.value = "";
     saveBoard();
   }
-
   function allowDrop(ev){ ev.preventDefault(); }
   function drop(ev){
     ev.preventDefault();
@@ -191,9 +259,12 @@
     ev.preventDefault();
     const id = ev.dataTransfer.getData("text/plain");
     const task = document.getElementById(id);
-    if(task){ task.remove(); saveBoard(); showToast("Task deleted"); }
+    if(task){
+      task.remove();
+      saveBoard();
+      showToast("Task deleted");
+    }
   }
-
   let toastTimer = null;
   function showToast(msg, timeout=1200){
     const t = document.getElementById("toast");
@@ -202,10 +273,9 @@
     if(toastTimer) clearTimeout(toastTimer);
     toastTimer = setTimeout(()=> t.classList.remove("show"), timeout);
   }
-
   window.addEventListener("load", loadBoard);
 
-  /* Notes */
+  /* ------------------ Notes JS ------------------ */
   let notes = JSON.parse(localStorage.getItem("notes")) || [];
   let editIndex = -1;
   renderNotes();
@@ -243,76 +313,18 @@
     noteInput.value = notes[index];
     editIndex = index;
   }
-
-  /* JSON Export & Import */
-  function exportTasksJSON() {
-    const board = JSON.parse(localStorage.getItem("kanbanBoard")) || {};
-    const blob = new Blob([JSON.stringify(board, null, 2)], { type: "application/json" });
+  function exportNotes() {
+    const content = notes.join("\n\n************************\n\n"); 
+    const blob = new Blob([content], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "tasks.json";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  }
-  function importTasksJSON(event){
-    const file = event.target.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = e=>{
-      try{
-        const data = JSON.parse(e.target.result);
-        localStorage.setItem("kanbanBoard", JSON.stringify(data));
-        loadBoard();
-        showToast("Tasks imported successfully", 2000);
-      }catch(err){ alert("Invalid JSON file"); }
-    };
-    reader.readAsText(file);
-  }
-
-  function exportNotesJSON() {
-    const blob = new Blob([JSON.stringify(notes, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "notes.json";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  }
-  function importNotesJSON(event){
-    const file = event.target.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = e=>{
-      try{
-        const data = JSON.parse(e.target.result);
-        notes = data;
-        localStorage.setItem("notes", JSON.stringify(notes));
-        renderNotes();
-        showToast("Notes imported successfully", 2000);
-      }catch(err){ alert("Invalid JSON file"); }
-    };
-    reader.readAsText(file);
-  }
-
-  /* ✅ Export Notes TXT */
-  function exportNotesTXT() {
-    if (!notes.length) {
-      alert("No notes to export");
-      return;
-    }
-    const textContent = notes.join("\n----------------\n");
-    const blob = new Blob([textContent], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "notes.txt";
+    a.download = "my_notes.txt";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
   }
 </script>
+
 </body>
 </html>
