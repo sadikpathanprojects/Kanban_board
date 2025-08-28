@@ -20,26 +20,34 @@
     padding:20px;
   }
   h1,h2{text-align:center;margin:16px 0 10px}
-  
+  .add-task{
+    width:90%;
+    display:flex;
+    gap:8px;
+    margin-bottom:14px;
+  }
+  .add-task input{
+    flex:1;padding:8px;border-radius:6px;border:0;outline:none;background:#333;color:#fff;
+  }
+  .add-task button{
+    padding:8px 12px;border-radius:6px;border:0;background:var(--accent);color:#fff;cursor:pointer;
+  }
+
   .board{
     width:95%;
     display:flex;
     gap:18px;
     justify-content:center;
     align-items:flex-start;
-    margin-bottom:10px;
-  }
-  .board-bottom{
-    width:50%;
-    display:flex;
-    justify-content:center;
     margin-bottom:30px;
+    flex-wrap:wrap;
   }
   .column{
     background:var(--col);
     border-radius:10px;
     padding:10px;
     flex:1;
+    min-width:200px;
     min-height:300px;
     display:flex;
     flex-direction:column;
@@ -63,7 +71,7 @@
     user-select:none;
   }
   .drag-handle:active{cursor:grabbing}
-  .task-text{flex:1;word-break:break-word;padding-right:6px;}
+  .task-text{flex:1;word-break:break-word;padding-right:6px;outline:none;}
   #dustbin{background:var(--danger)}
   .toast{
     position:fixed;
@@ -80,13 +88,16 @@
   /* Notes App Styling */
   textarea {
     width: 100%;
-    max-width: 700px;
-    height: 120px;
-    padding: 10px;
+    max-width: 900px;
+    height: 400px;
+    padding: 12px;
     border-radius: 8px;
     border: none;
     margin-bottom: 10px;
     font-size: 16px;
+    background: #333;
+    color: #fff;
+    resize: vertical;
   }
   button {
     margin: 5px;
@@ -102,7 +113,7 @@
   ul {
     list-style: none;
     padding: 0;
-    max-width: 700px;
+    max-width: 800px;
     width: 100%;
   }
   li {
@@ -132,10 +143,7 @@
     color:#aaa;
     text-align:center;
   }
-  @media (max-width:600px){
-    .board{flex-direction:column}
-    .board-bottom{width:95%}
-  }
+  @media (max-width:600px){.board{flex-direction:column}}
 </style>
 </head>
 <body>
@@ -145,9 +153,8 @@
 <div class="add-task">
   <input id="taskInput" placeholder="Enter new task" />
   <button onclick="addTask()">Add</button>
+  <button onclick="exportTasks()">Export Tasks</button>
 </div>
-
-<!-- Top row with 4 columns -->
 <div class="board">
   <div class="column" id="todo" ondrop="drop(event)" ondragover="allowDrop(event)">
     <h2>To Do</h2>
@@ -166,9 +173,6 @@
   </div>
 </div>
 
-<!-- Bottom row with Dustbin -->
-
-
 <div id="toast" class="toast" aria-live="polite"></div>
 
 <!-- Notes Section -->
@@ -184,7 +188,8 @@
 
 <script>
   /* ------------------ Kanban JS ------------------ */
-  let taskId = 0;
+  let taskId = Date.now();
+
   function saveBoard(){
     const columns = ["todo","inprogress","onhold","completed"];
     const boardData = {};
@@ -198,20 +203,44 @@
     });
     localStorage.setItem("kanbanBoard", JSON.stringify(boardData));
   }
+
   function loadBoard(){
-    const boardData = JSON.parse(localStorage.getItem("kanbanBoard") || "null");
-    if(!boardData) return;
+    let raw = localStorage.getItem("kanbanBoard");
+    if(!raw){
+      raw = localStorage.getItem("kanban");
+      if(raw){
+        localStorage.setItem("kanbanBoard", raw);
+        localStorage.removeItem("kanban");
+      }
+    }
+    if(!raw) return;
+    let boardData;
+    try {
+      boardData = JSON.parse(raw);
+    } catch(e){
+      console.error("Failed to parse kanban data:", e);
+      return;
+    }
+
+    ["todo","inprogress","onhold","completed"].forEach(col => {
+      document.querySelectorAll(`#${col} .task`).forEach(el => el.remove());
+    });
+
     Object.keys(boardData).forEach(col => {
+      const columnEl = document.getElementById(col);
+      if(!columnEl) return;
       boardData[col].forEach(taskText => {
-        const task = createTask(taskText);
-        document.getElementById(col).appendChild(task);
+        const task = createTask(taskText, false);
+        columnEl.appendChild(task);
       });
     });
   }
-  function createTask(text){
+
+  function createTask(text, doSave = true){
     const task = document.createElement("div");
     task.className = "task";
-    task.id = "task" + (taskId++);
+    task.id = "task-" + (taskId++);
+    
     const handle = document.createElement("span");
     handle.className = "drag-handle";
     handle.title = "Drag to move";
@@ -219,22 +248,31 @@
     handle.draggable = true;
     handle.addEventListener("dragstart", function(ev){
       ev.dataTransfer.setData("text/plain", task.id);
-      if (ev.dataTransfer.setDragImage && handle) {
-        const crt = handle.cloneNode(true);
-        crt.style.position = "absolute";
-        crt.style.top = "-9999px";
-        document.body.appendChild(crt);
-        ev.dataTransfer.setDragImage(crt, 8, 8);
-        setTimeout(()=> document.body.removeChild(crt), 0);
-      }
     });
+
     const span = document.createElement("span");
     span.className = "task-text";
     span.innerText = text;
+    span.contentEditable = true;
+
+    // Save when leaving edit
+    span.addEventListener("blur", saveBoard);
+
+    // Save when pressing Enter
+    span.addEventListener("keydown", (e)=>{
+      if(e.key === "Enter"){
+        e.preventDefault();
+        span.blur(); // triggers saveBoard
+      }
+    });
+
     task.appendChild(handle);
     task.appendChild(span);
+
+    if(doSave) saveBoard();
     return task;
   }
+
   function addTask(){
     const input = document.getElementById("taskInput");
     const text = input.value.trim();
@@ -244,6 +282,7 @@
     input.value = "";
     saveBoard();
   }
+
   function allowDrop(ev){ ev.preventDefault(); }
   function drop(ev){
     ev.preventDefault();
@@ -254,6 +293,7 @@
     col.appendChild(task);
     saveBoard();
   }
+
   function dropToDustbin(ev){
     ev.preventDefault();
     const id = ev.dataTransfer.getData("text/plain");
@@ -264,6 +304,7 @@
       showToast("Task deleted");
     }
   }
+
   let toastTimer = null;
   function showToast(msg, timeout=1200){
     const t = document.getElementById("toast");
@@ -272,6 +313,29 @@
     if(toastTimer) clearTimeout(toastTimer);
     toastTimer = setTimeout(()=> t.classList.remove("show"), timeout);
   }
+
+  function exportTasks() {
+    const columns = ["todo","inprogress","onhold","completed"];
+    let content = "";
+    columns.forEach(col => {
+      const headerEl = document.querySelector(`#${col} h2`);
+      const colName = headerEl ? headerEl.innerText : col;
+      content += "=== " + colName + " ===\n";
+      document.querySelectorAll(`#${col} .task-text`).forEach((t, i) => {
+        content += (i+1) + ". " + t.innerText + "\n";
+      });
+      content += "\n";
+    });
+    const blob = new Blob([content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "kanban_tasks.txt";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
   window.addEventListener("load", loadBoard);
 
   /* ------------------ Notes JS ------------------ */
